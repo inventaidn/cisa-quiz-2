@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CISA Quiz Engine</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- 🔒 ACCESS CONTROL -->
+  <script>
+    const urlParams = new URLSearchParams(window.location.search);
+    const quiz = urlParams.get("quiz"); // e.g., quiz1, quiz2, quiz3
+
+    // If no quiz name is provided, redirect to home
+    if (!quiz) {
+      window.location.href = "home.html";
+    }
+
+    // Check access for that specific quiz
+    const allowedQuiz = localStorage.getItem("quizAccess");
+    if (allowedQuiz !== quiz) {
+      window.location.href = `${quiz}/index.html`;
+    }
+  </script>
+
+  <style>
+    body { font-family: 'Inter', sans-serif; background: #f4f7fa; }
+    .bg-cisa-light { background-color: #e9eff6; }
+    .text-correct { color: #16a34a; }
+    .text-incorrect { color: #dc2626; }
+    .bg-correct { background-color: #16a34a; }
+    .bg-incorrect { background-color: #dc2626; }
+    .hidden { display: none; }
+  </style>
+</head>
+
+<body class="min-h-screen flex flex-col items-center justify-center p-4">
+  <!-- START SCREEN -->
+  <div id="start-screen" class="text-center">
+    <h1 class="text-3xl font-bold mb-4">CISA Quiz</h1>
+    <h2 id="quiz-title" class="text-gray-600 mb-6">Loading quiz...</h2>
+    <button onclick="startQuiz()" class="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700">Start Quiz</button>
+  </div>
+
+  <!-- QUIZ SCREEN -->
+  <div id="quiz-screen" class="hidden w-full max-w-2xl">
+    <div class="flex justify-between items-center mb-2">
+      <span id="question-counter" class="text-gray-600 text-sm"></span>
+      <div class="w-1/2 h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div id="progress-bar" class="h-2 bg-blue-600 w-0"></div>
+      </div>
+    </div>
+
+    <h2 id="question-text" class="text-xl font-semibold mb-4"></h2>
+    <div id="options-container" class="space-y-3"></div>
+
+    <div id="feedback-area" class="hidden mt-6 p-4 rounded-lg bg-white shadow">
+      <p id="feedback-message" class="mb-2 font-bold"></p>
+      <p id="rationale-text" class="text-sm text-gray-600"></p>
+    </div>
+
+    <div class="flex justify-end mt-6">
+      <button id="next-button" onclick="nextQuestion()" class="px-5 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">Next</button>
+    </div>
+  </div>
+
+  <!-- RESULTS SCREEN -->
+  <div id="results-screen" class="hidden text-center w-full max-w-2xl">
+    <h2 class="text-2xl font-bold mb-2">Results</h2>
+    <p class="text-lg mb-4">Your Score: <span id="final-score" class="font-semibold"></span></p>
+    <button onclick="goHome()" class="px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 mt-4">Return to Home</button>
+  </div>
+
+  <!-- SCRIPT -->
+  <script>
+    // =================== QUIZ LOADING ===================
+    let quizData = [];
+    let currentQuestionIndex = 0;
+    let userAnswers = [];
+    let isAnswered = false;
+
+    const dom = {
+      startScreen: document.getElementById('start-screen'),
+      quizScreen: document.getElementById('quiz-screen'),
+      resultsScreen: document.getElementById('results-screen'),
+      quizTitle: document.getElementById('quiz-title'),
+      questionText: document.getElementById('question-text'),
+      optionsContainer: document.getElementById('options-container'),
+      questionCounter: document.getElementById('question-counter'),
+      progressBar: document.getElementById('progress-bar'),
+      feedbackArea: document.getElementById('feedback-area'),
+      feedbackMessage: document.getElementById('feedback-message'),
+      rationaleText: document.getElementById('rationale-text'),
+      finalScore: document.getElementById('final-score')
+    };
+
+    async function loadQuiz() {
+      try {
+        const CSV_PATH = `${quiz}/questions.csv`;
+        dom.quizTitle.textContent = `Loading ${quiz.toUpperCase()}...`;
+        const response = await fetch(CSV_PATH);
+        const text = await response.text();
+
+        // CSV parsing (handles commas inside quotes)
+        const rows = text.trim().split("\n").map(r => r.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/));
+        const headers = rows.shift().map(h => h.trim());
+
+        quizData = rows.map(row => {
+          const data = {};
+          headers.forEach((h, i) => data[h] = row[i]?.replace(/^"|"$/g, '') || '');
+          return {
+            id: data.id,
+            question: data.question,
+            options: [data.option1, data.option2, data.option3, data.option4].filter(Boolean),
+            correctAnswerIndex: parseInt(data.correctAnswerIndex) || 0,
+            rationale: data.rationale || 'No rationale provided.'
+          };
+        });
+
+        dom.quizTitle.textContent = `✅ ${quizData.length} Questions Loaded (${quiz.toUpperCase()})`;
+      } catch (err) {
+        dom.quizTitle.textContent = "❌ Error loading quiz. Check CSV path.";
+        console.error("Error loading CSV:", err);
+      }
+    }
+
+    // =================== QUIZ LOGIC ===================
+    function startQuiz() {
+      if (quizData.length === 0) {
+        alert("Questions not loaded yet!");
+        return;
+      }
+      currentQuestionIndex = 0;
+      userAnswers = [];
+      isAnswered = false;
+      dom.startScreen.classList.add('hidden');
+      dom.resultsScreen.classList.add('hidden');
+      dom.quizScreen.classList.remove('hidden');
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const q = quizData[currentQuestionIndex];
+      if (!q) return showResults();
+      isAnswered = false;
+      dom.feedbackArea.classList.add('hidden');
+      dom.questionCounter.textContent = `Question ${currentQuestionIndex + 1} of ${quizData.length}`;
+      dom.progressBar.style.width = `${(currentQuestionIndex / quizData.length) * 100}%`;
+      dom.questionText.textContent = q.question;
+      dom.optionsContainer.innerHTML = '';
+
+      q.options.forEach((opt, i) => {
+        const btn = document.createElement('div');
+        btn.className = 'p-3 bg-cisa-light rounded-lg hover:bg-gray-200 cursor-pointer';
+        btn.textContent = `${String.fromCharCode(65 + i)}. ${opt}`;
+        btn.onclick = () => handleAnswerClick(i, btn);
+        dom.optionsContainer.appendChild(btn);
+      });
+    }
+
+    function handleAnswerClick(i, btn) {
+      if (isAnswered) return;
+      isAnswered = true;
+      const q = quizData[currentQuestionIndex];
+      const correct = i === q.correctAnswerIndex;
+      btn.classList.add(correct ? 'bg-correct' : 'bg-incorrect', 'text-white');
+      if (!correct) {
+        const correctBtn = Array.from(dom.optionsContainer.children)[q.correctAnswerIndex];
+        correctBtn.classList.add('bg-correct', 'text-white');
+      }
+      userAnswers.push({ id: q.id, isCorrect: correct });
+      dom.feedbackArea.classList.remove('hidden');
+      dom.feedbackMessage.textContent = correct ? '✅ Correct!' : '❌ Incorrect.';
+      dom.rationaleText.textContent = q.rationale;
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex >= quizData.length) showResults();
+      else renderQuestion();
+    }
+
+    function showResults() {
+      dom.quizScreen.classList.add('hidden');
+      dom.resultsScreen.classList.remove('hidden');
+      const totalCorrect = userAnswers.filter(a => a.isCorrect).length;
+      const score = ((totalCorrect / quizData.length) * 100).toFixed(1);
+      dom.finalScore.textContent = `${totalCorrect} / ${quizData.length} (${score}%)`;
+    }
+
+    function goHome() {
+      localStorage.removeItem("quizAccess");
+      window.location.href = "home.html";
+    }
+
+    document.addEventListener("DOMContentLoaded", loadQuiz);
+  </script>
+</body>
+</html>

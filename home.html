@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CISA Quiz Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to bottom right, #eff6ff, #e0f2fe);
+      min-height: 100vh;
+    }
+    .quiz-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .quiz-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center py-12">
+
+  <div class="text-center mb-8">
+    <h1 class="text-4xl font-bold text-gray-800 mb-2">CISA Study Quiz Portal</h1>
+    <p class="text-gray-600">Choose your quiz set to begin your CISA practice journey.</p>
+  </div>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 max-w-4xl w-full px-4">
+    <!-- Quiz 1 -->
+    <div class="quiz-card bg-white p-6 rounded-2xl shadow cursor-pointer hover:bg-blue-50"
+         onclick="window.location.href='quiz1/index.html'">
+      <h2 class="text-2xl font-semibold mb-2 text-blue-700">Quiz 1</h2>
+      <p class="text-gray-600">100 CISA Questions – Set A</p>
+    </div>
+
+    <!-- Quiz 2 -->
+    <div class="quiz-card bg-white p-6 rounded-2xl shadow cursor-pointer hover:bg-green-50"
+         onclick="window.location.href='quiz2/index.html'">
+      <h2 class="text-2xl font-semibold mb-2 text-green-700">Quiz 2</h2>
+      <p class="text-gray-600">100 CISA Questions – Set B</p>
+    </div>
+
+    <!-- Quiz 3 -->
+    <div class="quiz-card bg-white p-6 rounded-2xl shadow cursor-pointer hover:bg-purple-50"
+         onclick="window.location.href='quiz3/index.html'">
+      <h2 class="text-2xl font-semibold mb-2 text-purple-700">Quiz 3</h2>
+      <p class="text-gray-600">100 CISA Questions – Set C</p>
+    </div>
+  </div>
+
+  <footer class="mt-12 text-gray-500 text-sm">
+    <p>© 2025 CISA Study Quiz by Jesse. All rights reserved.</p>
+  </footer>
+</body>
+</html>
