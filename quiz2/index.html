@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CISA Quiz 2 – Set B</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(to bottom right, #ecfdf5, #d1fae5);
+      min-height: 100vh;
+    }
+  </style>
+</head>
+<body class="flex flex-col items-center justify-center">
+  <div class="bg-white p-8 rounded-2xl shadow-lg text-center max-w-sm w-full">
+    <h1 class="text-2xl font-bold mb-2 text-green-700">CISA Quiz 2</h1>
+    <p class="text-gray-600 mb-6">Enter password to access<br><b>100 CISA Questions – Set B</b></p>
+    <input type="password" id="password" placeholder="Password"
+           class="w-full border rounded-md p-2 text-center focus:outline-none focus:ring-2 focus:ring-green-400">
+    <button onclick="unlock()"
+            class="w-full mt-4 bg-green-600 hover:bg-green-700 text-white rounded-md py-2 font-semibold">
+      Enter
+    </button>
+  </div>
+
+  <script>
+    function unlock() {
+      const pass = document.getElementById("password").value.trim();
+      if (pass === "CISA0808") {
+        localStorage.setItem("quizAccess", "quiz2");
+        window.location.href = "../quiz.html?quiz=quiz2";
+      } else {
+        alert("Incorrect password. Try again.");
+      }
+    }
+  </script>
+</body>
+</html>
