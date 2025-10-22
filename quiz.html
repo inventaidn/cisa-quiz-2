@@ -96,7 +96,7 @@
 
     async function loadQuiz() {
       try {
-        const CSV_PATH = `${quiz}/questions.csv`;
+        const CSV_PATH = `${quiz}/question.csv`;
         dom.quizTitle.textContent = `Loading ${quiz.toUpperCase()}...`;
         const response = await fetch(CSV_PATH);
         const text = await response.text();
